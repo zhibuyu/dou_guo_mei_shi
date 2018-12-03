@@ -10,9 +10,7 @@ class Connect_mogo(object):
 
     # 插入数据
     def insert_item(self,item,table_name):
-        print("插入数据的表",table_name)
         db_collection = Collection(self.db_data,table_name)
-        db_collection.insert_many(item)
-
+        db_collection.insert(item)
 
 mongo_info = Connect_mogo()

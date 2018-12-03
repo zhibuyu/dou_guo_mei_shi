@@ -9,6 +9,8 @@ from concurrent.futures import ThreadPoolExecutor #线程池
 queue_list = Queue()
 start = 0
 end = 20
+menu_index = 0
+menu_total = 0
 
 #封装请求函数，相同的请求头
 def hndel_request(url,data):
@@ -67,7 +69,17 @@ def hndel_request(url,data):
              'http': '111.75.193.25:48449',
              'http': '211.138.248.108:59692',
              'http': '112.25.6.24:80',
-             'http': '60.173.203.83:31194'
+             'http': '115.210.25.84:9000',
+             'http': '61.183.176.122:57210',
+             'http': '183.129.207.82:11108',
+             'http': '113.59.59.73:58451',
+             'http': '117.191.11.111:80',
+             'http': '183.129.207.82:11328',
+             'http': '219.134.90.116:42931',
+             'http': '119.254.94.95:56942',
+             'http': '124.160.56.76:39660',
+             'http': '115.223.204.199:9000',
+             'http': '118.178.227.171:80'
              }
     # 请求函数构造好了
     response = requests.post(url=url,headers=header,data=data,proxies=proxy)
@@ -111,11 +123,16 @@ def handle_index():
 # 线程的处理函数
 # 请求的是菜谱列表和详情页
 def handle_recipe_list(data_3):
+    global menu_index
     type_name = data_3['type_name']
     data = data_3['data']
-    print("当前处理的名称==>"+data['keyword']+"=将要存储的表名==>"+type_name)
     recipe_list_url = 'http://api.douguo.net/recipe/v2/search/'+str(start)+'/'+str(end)
     handle_request_recipes(recipe_list_url,data,type_name)
+    menu_index +=1;
+    if(menu_index == menu_total):
+        print('***恭喜，数据全部爬取完毕***')
+    else:
+        print('***恭喜，'+type_name+'爬取完毕***')
 
 
 def handle_request_recipes(url,data,type_name):
@@ -128,34 +145,8 @@ def handle_request_recipes(url,data,type_name):
     recipe_lists = recipe_list_resonse_dict['result']['list']
     if recipe_lists:
         for item in recipe_lists:
-            recipe_info = {}
-            recipe_info['ingredients'] = data['keyword']  # 食材
             if item['type'] == 13:
-                item_info = item['r']
-                recipe_info['user_name'] = item_info['an']  # 食谱作者名
-                recipe_info['ingredients_id'] = item_info['id']  # 食材id
-                recipe_info['describe'] = item_info['cookstory'].replace('\n', '').replace(' ', '')
-                recipe_info['recipe_name'] = item_info['n']  # 菜谱名
-                recipe_info['recipe_img'] = item_info['img']  # 菜谱照片
-                recipe_info['seasoning_list'] = item_info['major']  # 菜谱调料
-                detail_url = 'http://api.douguo.net/recipe/detail/' + str(recipe_info['ingredients_id'])
-                detail_data = {
-                    "client": "4",
-                    # "_session": "1543814714644866174010224216",
-                    "author_id": "0",
-                    "_vs": "2801",
-                    "_ext": '{"query":{"id":' + str(recipe_info['ingredients_id']) + ',"kw":' + recipe_info[
-                        'ingredients'] + ',"idx":"1","src":"2801","type":"13"}}',
-                }
-                # 获得菜谱详情数据
-                detail_reponse = hndel_request(url=detail_url,data=detail_data)
-                detail_reponse_dict = json.loads(detail_reponse.text)
-                recipe_info['user_photo'] = detail_reponse_dict['result']['recipe']['user']['avatar_medium']  # 食谱作者头像
-                recipe_info['tips'] = detail_reponse_dict['result']['recipe']['tips']
-                recipe_info['cook_step'] = detail_reponse_dict['result']['recipe']['cookstep']
-                print('当前菜谱名为：'+str(recipe_info['recipe_name'])+'入库的'+type_name+'表')
-                # mongodb数据插入
-                mongo_info.insert_item(recipe_info,type_name)
+                main_request(item, data['keyword'], type_name)
             else:
                 continue
         start = end + 1
@@ -163,11 +154,41 @@ def handle_request_recipes(url,data,type_name):
         recipe_list_url1 = 'http://api.douguo.net/recipe/v2/search/' + str(start) + '/' + str(end)
         handle_request_recipes(recipe_list_url1, data, type_name)
     else:
-        print('***恭喜，数据爬取完毕***')
+        print(str(type_name)+'表的数据爬取完毕====》')
 
+# 主要请求处理
+def main_request(item,key_name,type_name):
+    recipe_info = {}
+    recipe_info['ingredients'] = key_name  # 食材或食谱名
+    item_info = item['r']
+    recipe_info['user_name'] = item_info['an']  # 食谱作者名
+    recipe_info['ingredients_id'] = item_info['id']  # 食材id
+    recipe_info['describe'] = item_info['cookstory'].replace('\n', '').replace(' ', '')
+    recipe_info['recipe_name'] = item_info['n']  # 菜谱名
+    recipe_info['recipe_img'] = item_info['img']  # 菜谱照片
+    recipe_info['seasoning_list'] = item_info['major']  # 菜谱调料
+    detail_url = 'http://api.douguo.net/recipe/detail/' + str(recipe_info['ingredients_id'])
+    detail_data = {
+        "client": "4",
+        # "_session": "1543814714644866174010224216",
+        "author_id": "0",
+        "_vs": "2801",
+        "_ext": '{"query":{"id":' + str(recipe_info['ingredients_id']) + ',"kw":' + recipe_info[
+            'ingredients'] + ',"idx":"1","src":"2801","type":"13"}}',
+    }
+    # 获得菜谱详情数据
+    detail_reponse = hndel_request(url=detail_url, data=detail_data)
+    detail_reponse_dict = json.loads(detail_reponse.text)
+    recipe_info['user_photo'] = detail_reponse_dict['result']['recipe']['user']['avatar_medium']  # 食谱作者头像
+    recipe_info['tips'] = detail_reponse_dict['result']['recipe']['tips']
+    recipe_info['cook_step'] = detail_reponse_dict['result']['recipe']['cookstep']
+    # mongodb数据插入
+    mongo_info.insert_item(recipe_info,type_name)
+    print('菜谱：' + str(recipe_info['recipe_name'])+"插入数据库，表名为"+str(type_name))
 
 handle_index()
 # 实现多线程抓取，引入了线程池
-pool = ThreadPoolExecutor(max_workers=30)#设置最大线程数
+pool = ThreadPoolExecutor(max_workers=40)#设置最大线程数
+menu_total = queue_list.qsize()
 while queue_list.qsize()>0:
     pool.submit(handle_recipe_list,queue_list.get())
