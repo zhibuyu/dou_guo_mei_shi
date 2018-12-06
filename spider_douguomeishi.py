@@ -1,3 +1,4 @@
+#爬取单页
 import  requests
 import json
 # 引入了队列
