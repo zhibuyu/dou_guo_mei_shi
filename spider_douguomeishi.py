@@ -9,8 +9,6 @@ from concurrent.futures import ThreadPoolExecutor #线程池
 
 # 创建队列
 queue_list = Queue()
-menu_index = 0
-menu_total = 0
 recipe_num = 0
 
 #封装请求函数，相同的请求头
@@ -95,16 +93,10 @@ def handle_index():
 # 线程的处理函数
 # 请求的是菜谱列表和详情页
 def handle_recipe_list(data_3):
-    global menu_index
     type_name = data_3['type_name']
     data = data_3['data']
     recipe_list_url = 'http://api.douguo.net/recipe/v2/search/0/20'
     handle_request_recipes(recipe_list_url,data,type_name)
-    menu_index +=1;
-    if(menu_index == menu_total):
-        print('***恭喜，指定范围内数据全部爬取完毕***')
-    else:
-        print('***恭喜，'+type_name+'爬取完毕***')
 
 
 def handle_request_recipes(url,data,type_name):
@@ -157,6 +149,5 @@ def main_request(item,key_name,type_name):
 handle_index()
 # 实现多线程抓取，引入了线程池
 pool = ThreadPoolExecutor(max_workers=20)#设置最大线程数
-menu_total = queue_list.qsize()
 while queue_list.qsize()>0:
     pool.submit(handle_recipe_list,queue_list.get())
