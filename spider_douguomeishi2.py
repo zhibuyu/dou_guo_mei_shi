@@ -8,6 +8,8 @@ from concurrent.futures import ThreadPoolExecutor #线程池
 
 # 创建队列
 queue_list = Queue()
+start = 0
+end = 20
 menu_index = 0
 menu_total = 0
 recipe_num = 0
@@ -47,13 +49,24 @@ def hndel_request(url,data):
         # "Content-Length": "68",
     }
     # 设置代理ip
-    proxy = {'http': '211.136.127.125:80'
+    proxy = {'http': '183.129.244.17:23222',
+             'http': '111.7.163.2:80',
+             'http': '115.223.216.114:9000',
+             'http': '115.223.200.54:9000',
+             'http': '115.223.232.5:9000',
+             'http': '124.235.135.210:80',
+             'http': '117.90.1.26:9000',
+             'http': '136.228.128.232:41838',
+             'http': '183.237.185.209:46049',
+             'http': '101.4.136.34:80',
+             'http': '180.118.92.169:9000',
+             'http': '210.72.14.142:80',
+             'http': '115.210.25.84:9000',
+             'http': '118.182.33.6:42801'
              }
 
     # 请求函数构造好了
     response = requests.post(url=url,headers=header,data=data,proxies=proxy)
-    # response = requests.post(url=url,headers=header,data=data)
-
     return response
 
 # 菜谱分类页面
@@ -97,17 +110,19 @@ def handle_recipe_list(data_3):
     global menu_index
     type_name = data_3['type_name']
     data = data_3['data']
-    recipe_list_url = 'http://api.douguo.net/recipe/v2/search/0/20'
+    recipe_list_url = 'http://api.douguo.net/recipe/v2/search/'+str(start)+'/'+str(end)
     handle_request_recipes(recipe_list_url,data,type_name)
     menu_index +=1;
     if(menu_index == menu_total):
-        print('***恭喜，指定范围内数据全部爬取完毕***')
+        print('***恭喜，数据全部爬取完毕***')
     else:
         print('***恭喜，'+type_name+'爬取完毕***')
 
 
 def handle_request_recipes(url,data,type_name):
-    # print("当前请求的列表url：", url)
+    print("当前请求的列表url：", url)
+    global start
+    global end
     # 获得菜谱列表数据
     recipe_lst_response = hndel_request(url=url,data=data)
     recipe_list_resonse_dict = json.loads(recipe_lst_response.text)
@@ -118,6 +133,10 @@ def handle_request_recipes(url,data,type_name):
                 main_request(item, data['keyword'], type_name)
             else:
                 continue
+        start = end + 1
+        end = start + len(recipe_lists)
+        recipe_list_url1 = 'http://api.douguo.net/recipe/v2/search/' + str(start) + '/' + str(end)
+        handle_request_recipes(recipe_list_url1, data, type_name)
     else:
         print(str(type_name)+'表的数据爬取完毕====》')
 
