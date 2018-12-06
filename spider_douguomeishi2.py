@@ -170,7 +170,7 @@ def main_request(item,key_name,type_name):
     # mongodb数据插入
     mongo_info.insert_item(recipe_info,type_name)
     recipe_num +=1
-    print('菜谱：' + str(recipe_info['recipe_name'])+'插入数据库，表名为'+str(type_name)+'===成功入库的第'+str(recipe_num)+'个食谱')
+    print('菜谱：' + str(recipe_info['recipe_name'])+'插入数据库，表名为'+str(type_name)+'===》成功入库的第'+str(recipe_num)+'个食谱')
 
 handle_index()
 # 实现多线程抓取，引入了线程池
